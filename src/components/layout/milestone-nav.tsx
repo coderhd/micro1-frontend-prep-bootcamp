@@ -10,6 +10,9 @@ import {
 	Lock,
 	ChevronRight,
 	Sparkles,
+	Server,
+	Cpu,
+	Terminal,
 } from 'lucide-react'
 
 export interface MilestoneNavItem {
@@ -21,7 +24,7 @@ export interface MilestoneNavItem {
 	isFinalBoss?: boolean
 }
 
-export const MILESTONES_META: MilestoneNavItem[] = [
+export const FRONTEND_MILESTONES_META: MilestoneNavItem[] = [
 	{
 		id: 'm1',
 		number: 1,
@@ -67,8 +70,48 @@ export const MILESTONES_META: MilestoneNavItem[] = [
 	},
 ]
 
+export const AI_MILESTONES_META: MilestoneNavItem[] = [
+	{
+		id: 'ai-m1',
+		number: 1,
+		title: 'MCP Protocol & Architecture',
+		subtitle: 'JSON-RPC 2.0, Tools/Resources, stdio/SSE',
+		icon: Server,
+	},
+	{
+		id: 'ai-m2',
+		number: 2,
+		title: 'Agentic Loops & Orchestration',
+		subtitle: 'ReAct Engine, Cycle Detection, Context Budget',
+		icon: Bot,
+	},
+	{
+		id: 'ai-m3',
+		number: 3,
+		title: 'Tool Integration & Debugging',
+		subtitle: 'Zod Validation, Error Recovery, Sandboxing',
+		icon: Terminal,
+	},
+	{
+		id: 'ai-m4',
+		number: 4,
+		title: 'RL Environments & SWE-Bench',
+		subtitle: 'FAIL_TO_PASS Matrices, Docker Isolation',
+		icon: Cpu,
+	},
+	{
+		id: 'ai-m5',
+		number: 5,
+		title: 'Zara AI Engineer Interview',
+		subtitle: '30-Min AI Recruiter Simulation + Scorecard',
+		icon: Bot,
+		isFinalBoss: true,
+	},
+]
+
 export function MilestoneNav () {
 	const {
+		activeTrack,
 		activeMilestoneId,
 		setActiveMilestone,
 		unlockedMilestones,
@@ -76,20 +119,23 @@ export function MilestoneNav () {
 		quizResults,
 	} = useProgressStore()
 
+	const milestones = activeTrack === 'frontend' ? FRONTEND_MILESTONES_META : AI_MILESTONES_META
+	const currentTrackCompletedCount = milestones.filter(m => completedMilestones.includes(m.id)).length
+
 	return (
 		<aside className="w-full lg:w-80 shrink-0">
 			<div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-sm sticky top-20">
 				<div className="mb-3 flex items-center justify-between px-1">
 					<h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-						Interview Milestones
+						{activeTrack === 'frontend' ? 'Frontend Roadmap' : 'AI Engineer Roadmap'}
 					</h2>
 					<span className="text-xs text-brand-400 font-medium">
-						{completedMilestones.length} / 6 Completed
+						{currentTrackCompletedCount} / {milestones.length} Completed
 					</span>
 				</div>
 
 				<nav className="flex flex-col gap-2">
-					{MILESTONES_META.map((item) => {
+					{milestones.map((item) => {
 						const isUnlocked = unlockedMilestones.includes(item.id)
 						const isCompleted = completedMilestones.includes(item.id)
 						const isActive = activeMilestoneId === item.id
@@ -193,7 +239,9 @@ export function MilestoneNav () {
 						<span>Micro1 AI Tip</span>
 					</div>
 					<p className="leading-relaxed">
-						Complete each module&apos;s diagnostic quiz with &ge;80% score to unlock the next milestone. Finish all 4 to tackle Zara AI!
+						{activeTrack === 'frontend'
+							? 'Pass each module diagnostic quiz with >=80% score to unlock the next milestone. Finish all 5 to tackle Zara AI!'
+							: 'Master MCP JSON-RPC protocol, ReAct loops, and SWE-bench test matrices to pass the 30-min AI screening!'}
 					</p>
 				</div>
 			</div>

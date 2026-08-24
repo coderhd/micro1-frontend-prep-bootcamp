@@ -3,7 +3,6 @@ import {
 	AnswerEvaluation,
 	InterviewRecord,
 	InterviewFinalReport,
-	InterviewStage,
 } from '../../types/interview'
 
 export function evaluateCandidateAnswer (
@@ -100,15 +99,7 @@ export function generateFinalInterviewReport (
 	records: InterviewRecord[],
 ): InterviewFinalReport {
 	let totalScoreAccumulator = 0
-	const stageScores: Record<InterviewStage, number> = {
-		intro: 0,
-		javascript: 0,
-		typescript: 0,
-		react: 0,
-		'css-cwv': 0,
-		'debugging-rl': 0,
-		'live-coding': 0,
-	}
+	const stageScores: Record<string, number> = {}
 
 	records.forEach((rec) => {
 		totalScoreAccumulator += rec.evaluation.scorePercentage

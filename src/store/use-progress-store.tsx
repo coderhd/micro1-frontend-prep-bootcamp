@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import confetti from 'canvas-confetti'
 import { InterviewFinalReport } from '../types/interview'
+import { TrackType } from '../types/curriculum'
 
 interface QuizResult {
 	score: number
@@ -10,6 +11,7 @@ interface QuizResult {
 }
 
 interface ProgressState {
+	activeTrack: TrackType
 	activeMilestoneId: string
 	unlockedMilestones: string[]
 	completedMilestones: string[]
@@ -20,6 +22,7 @@ interface ProgressState {
 }
 
 interface ProgressContextType extends ProgressState {
+	setActiveTrack: (track: TrackType) => void
 	setActiveMilestone: (id: string) => void
 	recordQuizResult: (milestoneId: string, score: number, total: number) => boolean
 	markLabComplete: (labId: string) => void
@@ -30,11 +33,15 @@ interface ProgressContextType extends ProgressState {
 	getOverallReadiness: () => number
 }
 
-const STORAGE_KEY = 'frontend_mastery_bootcamp_progress_v1'
+const STORAGE_KEY = 'frontend_mastery_bootcamp_progress_v2'
+
+const FRONTEND_SEQUENCE = ['m1', 'm-ts', 'm2', 'm3', 'm4', 'm5']
+const AI_SEQUENCE = ['ai-m1', 'ai-m2', 'ai-m3', 'ai-m4', 'ai-m5']
 
 const initialDefaultState: ProgressState = {
+	activeTrack: 'frontend',
 	activeMilestoneId: 'm1',
-	unlockedMilestones: ['m1'],
+	unlockedMilestones: ['m1', 'ai-m1'],
 	completedMilestones: [],
 	quizResults: {},
 	completedLabs: {},
@@ -43,8 +50,6 @@ const initialDefaultState: ProgressState = {
 }
 
 const ProgressContext = createContext<ProgressContextType | undefined>(undefined)
-
-const MILESTONE_SEQUENCE = ['m1', 'm-ts', 'm2', 'm3', 'm4', 'm5']
 
 export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 	const [state, setState] = useState<ProgressState>(() => {
@@ -55,7 +60,7 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 				return {
 					...initialDefaultState,
 					...parsed,
-					unlockedMilestones: parsed.unlockedMilestones || ['m1'],
+					unlockedMilestones: parsed.unlockedMilestones || ['m1', 'ai-m1'],
 				}
 			}
 		} catch (e) {
@@ -85,6 +90,19 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 		}
 	}
 
+	const setActiveTrack = (track: TrackType) => {
+		setState(prev => {
+			const defaultMilestone = track === 'frontend' ? 'm1' : 'ai-m1'
+			const sequence = track === 'frontend' ? FRONTEND_SEQUENCE : AI_SEQUENCE
+			const currentBelongs = sequence.includes(prev.activeMilestoneId)
+			return {
+				...prev,
+				activeTrack: track,
+				activeMilestoneId: currentBelongs ? prev.activeMilestoneId : defaultMilestone,
+			}
+		})
+	}
+
 	const setActiveMilestone = (id: string) => {
 		setState(prev => ({
 			...prev,
@@ -98,10 +116,12 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 		total: number,
 	): boolean => {
 		const passed = score / total >= 0.8
-		const currentIndex = MILESTONE_SEQUENCE.indexOf(milestoneId)
+		const isAi = milestoneId.startsWith('ai-')
+		const sequence = isAi ? AI_SEQUENCE : FRONTEND_SEQUENCE
+		const currentIndex = sequence.indexOf(milestoneId)
 		const nextMilestoneId =
-			currentIndex >= 0 && currentIndex < MILESTONE_SEQUENCE.length - 1
-				? MILESTONE_SEQUENCE[currentIndex + 1]
+			currentIndex >= 0 && currentIndex < sequence.length - 1
+				? sequence[currentIndex + 1]
 				: null
 
 		setState(prev => {
@@ -150,10 +170,11 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 	}
 
 	const saveInterviewReport = (report: InterviewFinalReport) => {
+		const finalMilestone = state.activeTrack === 'frontend' ? 'm5' : 'ai-m5'
 		setState(prev => ({
 			...prev,
 			completedMilestones: Array.from(
-				new Set([...prev.completedMilestones, 'm5']),
+				new Set([...prev.completedMilestones, finalMilestone]),
 			),
 			interviewReports: [report, ...prev.interviewReports],
 		}))
@@ -163,21 +184,23 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 	const resetAllProgress = () => {
 		setState({
 			...initialDefaultState,
-			activeMilestoneId: 'm1',
+			activeTrack: state.activeTrack,
+			activeMilestoneId: state.activeTrack === 'frontend' ? 'm1' : 'ai-m1',
 		})
 	}
 
 	const toggleUnlockAll = () => {
 		setState(prev => {
 			const nextUnlocked = !prev.isAllUnlocked
+			const fullSequence = [...FRONTEND_SEQUENCE, ...AI_SEQUENCE]
 			return {
 				...prev,
 				isAllUnlocked: nextUnlocked,
 				unlockedMilestones: nextUnlocked
-					? [...MILESTONE_SEQUENCE]
+					? fullSequence
 					: prev.completedMilestones.length > 0
-						? ['m1', ...prev.completedMilestones]
-						: ['m1'],
+						? ['m1', 'ai-m1', ...prev.completedMilestones]
+						: ['m1', 'ai-m1'],
 			}
 		})
 	}
@@ -186,17 +209,31 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 		let points = 0
 		const maxPoints = 100
 
-		// Milestones passed (up to 5 * 12 = 60 points)
-		const milestoneScores = ['m1', 'm-ts', 'm2', 'm3', 'm4'].reduce((acc, mId) => {
-			const res = state.quizResults[mId]
-			if (res && res.passed) return acc + 12
-			return acc
-		}, 0)
-		points += milestoneScores
+		if (state.activeTrack === 'frontend') {
+			// Frontend milestones (5 * 12 = 60 points)
+			const milestoneScores = ['m1', 'm-ts', 'm2', 'm3', 'm4'].reduce((acc, mId) => {
+				const res = state.quizResults[mId]
+				if (res && res.passed) return acc + 12
+				return acc
+			}, 0)
+			points += milestoneScores
 
-		// Completed labs (up to 15 points)
-		const labCount = Object.keys(state.completedLabs).length
-		points += Math.min(15, labCount * 5)
+			// Completed labs (up to 15 points)
+			const labCount = Object.keys(state.completedLabs).filter(k => !k.startsWith('ai-')).length
+			points += Math.min(15, labCount * 5)
+		} else {
+			// AI Engineer milestones (4 * 15 = 60 points)
+			const milestoneScores = ['ai-m1', 'ai-m2', 'ai-m3', 'ai-m4'].reduce((acc, mId) => {
+				const res = state.quizResults[mId]
+				if (res && res.passed) return acc + 15
+				return acc
+			}, 0)
+			points += milestoneScores
+
+			// Completed AI labs (up to 15 points)
+			const labCount = Object.keys(state.completedLabs).filter(k => k.startsWith('ai-')).length
+			points += Math.min(15, labCount * 5)
+		}
 
 		// Interview completed (25 points)
 		if (state.interviewReports.length > 0) {
@@ -211,6 +248,7 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 		<ProgressContext.Provider
 			value={{
 				...state,
+				setActiveTrack,
 				setActiveMilestone,
 				recordQuizResult,
 				markLabComplete,

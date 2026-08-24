@@ -25,13 +25,21 @@ import {
 interface InterviewInterfaceProps {
 	onFinish: (report: InterviewFinalReport) => void
 	onCancel: () => void
+	customQuestions?: typeof ZARA_INTERVIEW_QUESTIONS
+	durationMinutes?: number
 }
 
-export function InterviewInterface ({ onFinish, onCancel }: InterviewInterfaceProps) {
+export function InterviewInterface ({
+	onFinish,
+	onCancel,
+	customQuestions,
+	durationMinutes = 25,
+}: InterviewInterfaceProps) {
 	const { saveInterviewReport } = useProgressStore()
 
+	const questions = customQuestions || ZARA_INTERVIEW_QUESTIONS
 	const [questionIndex, setQuestionIndex] = useState(0)
-	const [timeLeftSeconds, setTimeLeftSeconds] = useState(25 * 60) // 25 mins
+	const [timeLeftSeconds, setTimeLeftSeconds] = useState(durationMinutes * 60)
 	const [isMuted, setIsMuted] = useState(false)
 	const [isSpeaking, setIsSpeaking] = useState(false)
 	const [isListening, setIsListening] = useState(false)
@@ -40,7 +48,7 @@ export function InterviewInterface ({ onFinish, onCancel }: InterviewInterfacePr
 	const [showModelHint, setShowModelHint] = useState(false)
 
 	const recognitionRef = useRef<any>(null)
-	const currentQuestion = ZARA_INTERVIEW_QUESTIONS[questionIndex]
+	const currentQuestion = questions[questionIndex] || questions[0]
 
 	// 25-minute Timer
 	useEffect(() => {
@@ -135,7 +143,7 @@ export function InterviewInterface ({ onFinish, onCancel }: InterviewInterfacePr
 		setUserAnswerText('')
 		setShowModelHint(false)
 
-		if (questionIndex < ZARA_INTERVIEW_QUESTIONS.length - 1) {
+		if (questionIndex < questions.length - 1) {
 			setQuestionIndex(prev => prev + 1)
 		} else {
 			handleFinalize(updated)
@@ -165,7 +173,7 @@ export function InterviewInterface ({ onFinish, onCancel }: InterviewInterfacePr
 							<span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
 						</div>
 						<span className="text-[11px] text-slate-400 font-mono">
-							Round {questionIndex + 1} of {ZARA_INTERVIEW_QUESTIONS.length}: {currentQuestion.stageName}
+							Round {questionIndex + 1} of {questions.length}: {currentQuestion.stageName}
 						</span>
 					</div>
 				</div>
@@ -320,7 +328,7 @@ export function InterviewInterface ({ onFinish, onCancel }: InterviewInterfacePr
 									: 'bg-surface-800 text-slate-500 cursor-not-allowed'
 							}`}
 						>
-							<span>{questionIndex === ZARA_INTERVIEW_QUESTIONS.length - 1 ? 'Submit & Finalize Interview' : 'Submit Response to Zara'}</span>
+							<span>{questionIndex === questions.length - 1 ? 'Submit & Finalize Interview' : 'Submit Response to Zara'}</span>
 							<Send className="h-3.5 w-3.5" />
 						</button>
 					</div>

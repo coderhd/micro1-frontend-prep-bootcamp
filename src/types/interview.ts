@@ -6,6 +6,13 @@ export type InterviewStage =
 	| 'css-cwv'
 	| 'debugging-rl'
 	| 'live-coding'
+	| 'ai-intro'
+	| 'mcp-protocol'
+	| 'agentic-loops'
+	| 'tools-debugging'
+	| 'rl-benchmarking'
+	| 'swe-bench-verification'
+	| 'live-architecture-synthesis'
 
 export interface InterviewQuestionItem {
 	id: string
@@ -51,7 +58,7 @@ export interface InterviewFinalReport {
 	timestamp: number
 	totalScore: number
 	hireRecommendation: 'Strong Hire (Top 5%)' | 'Hire (Ready for RL Project)' | 'Borderline (Needs Review)' | 'Not Ready'
-	stageScores: Record<InterviewStage, number>
+	stageScores: Record<string, number>
 	executiveSummary: string
 	topStrengths: string[]
 	criticalGaps: string[]

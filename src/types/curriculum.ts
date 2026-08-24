@@ -1,9 +1,15 @@
+export type TrackType = 'frontend' | 'ai-engineer'
+
 export type CategoryType = 
 	| 'javascript' 
 	| 'typescript'
 	| 'react' 
 	| 'css-a11y' 
 	| 'debugging-testing' 
+	| 'mcp'
+	| 'agentic-ai'
+	| 'tools-debugging'
+	| 'rl-benchmarks'
 	| 'interview'
 
 export interface CodeExample {
