@@ -13,6 +13,13 @@ export type InterviewStage =
 	| 'rl-benchmarking'
 	| 'swe-bench-verification'
 	| 'live-architecture-synthesis'
+	| 'specialist-intro'
+	| 'specialist-rationale'
+	| 'specialist-critique'
+	| 'specialist-rfcs'
+	| 'specialist-non-tech-comm'
+	| 'specialist-stakeholders'
+	| 'specialist-live-synthesis'
 
 export interface InterviewQuestionItem {
 	id: string

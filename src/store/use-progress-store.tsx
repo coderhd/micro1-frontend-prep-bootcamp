@@ -33,15 +33,16 @@ interface ProgressContextType extends ProgressState {
 	getOverallReadiness: () => number
 }
 
-const STORAGE_KEY = 'frontend_mastery_bootcamp_progress_v2'
+const STORAGE_KEY = 'frontend_mastery_bootcamp_progress_v3'
 
 const FRONTEND_SEQUENCE = ['m1', 'm-ts', 'm2', 'm3', 'm4', 'm5']
 const AI_SEQUENCE = ['ai-m1', 'ai-m2', 'ai-m3', 'ai-m4', 'ai-m5']
+const SPECIALIST_SEQUENCE = ['sp-m1', 'sp-m2', 'sp-m3', 'sp-m4', 'sp-m5']
 
 const initialDefaultState: ProgressState = {
 	activeTrack: 'frontend',
 	activeMilestoneId: 'm1',
-	unlockedMilestones: ['m1', 'ai-m1'],
+	unlockedMilestones: ['m1', 'ai-m1', 'sp-m1'],
 	completedMilestones: [],
 	quizResults: {},
 	completedLabs: {},
@@ -60,7 +61,7 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 				return {
 					...initialDefaultState,
 					...parsed,
-					unlockedMilestones: parsed.unlockedMilestones || ['m1', 'ai-m1'],
+					unlockedMilestones: parsed.unlockedMilestones || ['m1', 'ai-m1', 'sp-m1'],
 				}
 			}
 		} catch (e) {
@@ -83,7 +84,7 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 				particleCount: 80,
 				spread: 70,
 				origin: { y: 0.6 },
-				colors: ['#6366f1', '#818cf8', '#10b981', '#f59e0b', '#ec4899'],
+				colors: ['#6366f1', '#818cf8', '#10b981', '#f59e0b', '#ec4899', '#a855f7'],
 			})
 		} catch {
 			// ignore confetti errors
@@ -92,8 +93,16 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 
 	const setActiveTrack = (track: TrackType) => {
 		setState(prev => {
-			const defaultMilestone = track === 'frontend' ? 'm1' : 'ai-m1'
-			const sequence = track === 'frontend' ? FRONTEND_SEQUENCE : AI_SEQUENCE
+			let defaultMilestone = 'm1'
+			let sequence = FRONTEND_SEQUENCE
+			if (track === 'ai-engineer') {
+				defaultMilestone = 'ai-m1'
+				sequence = AI_SEQUENCE
+			} else if (track === 'frontend-specialist') {
+				defaultMilestone = 'sp-m1'
+				sequence = SPECIALIST_SEQUENCE
+			}
+
 			const currentBelongs = sequence.includes(prev.activeMilestoneId)
 			return {
 				...prev,
@@ -116,8 +125,13 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 		total: number,
 	): boolean => {
 		const passed = score / total >= 0.8
-		const isAi = milestoneId.startsWith('ai-')
-		const sequence = isAi ? AI_SEQUENCE : FRONTEND_SEQUENCE
+		let sequence = FRONTEND_SEQUENCE
+		if (milestoneId.startsWith('ai-')) {
+			sequence = AI_SEQUENCE
+		} else if (milestoneId.startsWith('sp-')) {
+			sequence = SPECIALIST_SEQUENCE
+		}
+
 		const currentIndex = sequence.indexOf(milestoneId)
 		const nextMilestoneId =
 			currentIndex >= 0 && currentIndex < sequence.length - 1
@@ -170,7 +184,10 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 	}
 
 	const saveInterviewReport = (report: InterviewFinalReport) => {
-		const finalMilestone = state.activeTrack === 'frontend' ? 'm5' : 'ai-m5'
+		let finalMilestone = 'm5'
+		if (state.activeTrack === 'ai-engineer') finalMilestone = 'ai-m5'
+		else if (state.activeTrack === 'frontend-specialist') finalMilestone = 'sp-m5'
+
 		setState(prev => ({
 			...prev,
 			completedMilestones: Array.from(
@@ -182,25 +199,29 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 	}
 
 	const resetAllProgress = () => {
+		let defaultMilestone = 'm1'
+		if (state.activeTrack === 'ai-engineer') defaultMilestone = 'ai-m1'
+		else if (state.activeTrack === 'frontend-specialist') defaultMilestone = 'sp-m1'
+
 		setState({
 			...initialDefaultState,
 			activeTrack: state.activeTrack,
-			activeMilestoneId: state.activeTrack === 'frontend' ? 'm1' : 'ai-m1',
+			activeMilestoneId: defaultMilestone,
 		})
 	}
 
 	const toggleUnlockAll = () => {
 		setState(prev => {
 			const nextUnlocked = !prev.isAllUnlocked
-			const fullSequence = [...FRONTEND_SEQUENCE, ...AI_SEQUENCE]
+			const fullSequence = [...FRONTEND_SEQUENCE, ...AI_SEQUENCE, ...SPECIALIST_SEQUENCE]
 			return {
 				...prev,
 				isAllUnlocked: nextUnlocked,
 				unlockedMilestones: nextUnlocked
 					? fullSequence
 					: prev.completedMilestones.length > 0
-						? ['m1', 'ai-m1', ...prev.completedMilestones]
-						: ['m1', 'ai-m1'],
+						? ['m1', 'ai-m1', 'sp-m1', ...prev.completedMilestones]
+						: ['m1', 'ai-m1', 'sp-m1'],
 			}
 		})
 	}
@@ -219,9 +240,11 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 			points += milestoneScores
 
 			// Completed labs (up to 15 points)
-			const labCount = Object.keys(state.completedLabs).filter(k => !k.startsWith('ai-')).length
+			const labCount = Object.keys(state.completedLabs).filter(
+				k => !k.startsWith('ai-') && !k.startsWith('sp-'),
+			).length
 			points += Math.min(15, labCount * 5)
-		} else {
+		} else if (state.activeTrack === 'ai-engineer') {
 			// AI Engineer milestones (4 * 15 = 60 points)
 			const milestoneScores = ['ai-m1', 'ai-m2', 'ai-m3', 'ai-m4'].reduce((acc, mId) => {
 				const res = state.quizResults[mId]
@@ -232,6 +255,18 @@ export function ProgressProvider ({ children }: { children: React.ReactNode }) {
 
 			// Completed AI labs (up to 15 points)
 			const labCount = Object.keys(state.completedLabs).filter(k => k.startsWith('ai-')).length
+			points += Math.min(15, labCount * 5)
+		} else {
+			// Frontend Specialist milestones (4 * 15 = 60 points)
+			const milestoneScores = ['sp-m1', 'sp-m2', 'sp-m3', 'sp-m4'].reduce((acc, mId) => {
+				const res = state.quizResults[mId]
+				if (res && res.passed) return acc + 15
+				return acc
+			}, 0)
+			points += milestoneScores
+
+			// Completed Specialist labs (up to 15 points)
+			const labCount = Object.keys(state.completedLabs).filter(k => k.startsWith('sp-')).length
 			points += Math.min(15, labCount * 5)
 		}
 

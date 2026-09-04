@@ -13,6 +13,8 @@ import {
 	Server,
 	Cpu,
 	Terminal,
+	FileEdit,
+	Users,
 } from 'lucide-react'
 
 export interface MilestoneNavItem {
@@ -109,6 +111,45 @@ export const AI_MILESTONES_META: MilestoneNavItem[] = [
 	},
 ]
 
+export const SPECIALIST_MILESTONES_META: MilestoneNavItem[] = [
+	{
+		id: 'sp-m1',
+		number: 1,
+		title: 'Design Decision Rationale',
+		subtitle: 'CSR/SSR/ISR/RSC, State Models, Budgets',
+		icon: Layers,
+	},
+	{
+		id: 'sp-m2',
+		number: 2,
+		title: 'Code Critique & Architecture',
+		subtitle: 'Anti-Patterns, Race Conditions, Constructive PRs',
+		icon: Code2,
+	},
+	{
+		id: 'sp-m3',
+		number: 3,
+		title: 'Technical Writing (RFCs & ADRs)',
+		subtitle: 'Problem Framing, Trade-offs & Rollback Criteria',
+		icon: FileEdit,
+	},
+	{
+		id: 'sp-m4',
+		number: 4,
+		title: 'Non-Technical Communication',
+		subtitle: 'Analogies, Stakeholder Conflict & Influence',
+		icon: Users,
+	},
+	{
+		id: 'sp-m5',
+		number: 5,
+		title: 'Zara Specialist Interview',
+		subtitle: '28-Min AI Recruiter Simulation + Scorecard',
+		icon: Bot,
+		isFinalBoss: true,
+	},
+]
+
 export function MilestoneNav () {
 	const {
 		activeTrack,
@@ -119,7 +160,17 @@ export function MilestoneNav () {
 		quizResults,
 	} = useProgressStore()
 
-	const milestones = activeTrack === 'frontend' ? FRONTEND_MILESTONES_META : AI_MILESTONES_META
+	let milestones = FRONTEND_MILESTONES_META
+	let trackTitle = 'Frontend Roadmap'
+
+	if (activeTrack === 'ai-engineer') {
+		milestones = AI_MILESTONES_META
+		trackTitle = 'AI Engineer Roadmap'
+	} else if (activeTrack === 'frontend-specialist') {
+		milestones = SPECIALIST_MILESTONES_META
+		trackTitle = 'Specialist Roadmap'
+	}
+
 	const currentTrackCompletedCount = milestones.filter(m => completedMilestones.includes(m.id)).length
 
 	return (
@@ -127,7 +178,7 @@ export function MilestoneNav () {
 			<div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-sm sticky top-20">
 				<div className="mb-3 flex items-center justify-between px-1">
 					<h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-						{activeTrack === 'frontend' ? 'Frontend Roadmap' : 'AI Engineer Roadmap'}
+						{trackTitle}
 					</h2>
 					<span className="text-xs text-brand-400 font-medium">
 						{currentTrackCompletedCount} / {milestones.length} Completed
@@ -149,7 +200,9 @@ export function MilestoneNav () {
 								onClick={() => setActiveMilestone(item.id)}
 								className={`group relative flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-all ${
 									isActive
-										? 'bg-gradient-to-r from-brand-600/20 to-purple-600/10 border border-brand-500/40 shadow-lg shadow-brand-500/10'
+										? activeTrack === 'frontend-specialist'
+											? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/10 border border-indigo-500/40 shadow-lg shadow-indigo-500/10'
+											: 'bg-gradient-to-r from-brand-600/20 to-purple-600/10 border border-brand-500/40 shadow-lg shadow-brand-500/10'
 										: isUnlocked
 											? 'hover:bg-surface-800/80 border border-transparent text-slate-300'
 											: 'opacity-50 cursor-not-allowed border border-transparent text-slate-500'
@@ -165,7 +218,9 @@ export function MilestoneNav () {
 													? 'bg-purple-950 text-purple-400 border border-purple-800'
 													: 'bg-surface-800 text-slate-600'
 											: isActive
-												? 'bg-brand-500 text-white shadow-md shadow-brand-500/30'
+												? activeTrack === 'frontend-specialist'
+													? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30'
+													: 'bg-brand-500 text-white shadow-md shadow-brand-500/30'
 												: isCompleted
 													? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
 													: isUnlocked
@@ -241,7 +296,9 @@ export function MilestoneNav () {
 					<p className="leading-relaxed">
 						{activeTrack === 'frontend'
 							? 'Pass each module diagnostic quiz with >=80% score to unlock the next milestone. Finish all 5 to tackle Zara AI!'
-							: 'Master MCP JSON-RPC protocol, ReAct loops, and SWE-bench test matrices to pass the 30-min AI screening!'}
+							: activeTrack === 'ai-engineer'
+								? 'Master MCP JSON-RPC protocol, ReAct loops, and SWE-bench test matrices to pass the 30-min AI screening!'
+								: 'Master technical trade-off matrices, code reviews, and RFCs/ADRs to pass the 28-min Specialist AI screening!'}
 					</p>
 				</div>
 			</div>

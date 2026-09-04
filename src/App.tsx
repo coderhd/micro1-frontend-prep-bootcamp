@@ -8,6 +8,8 @@ import { Milestone4Page } from './components/milestones/milestone-4'
 import { Milestone5Page } from './components/milestones/milestone-5'
 import { AiMilestonePage } from './components/ai-engineer/ai-milestone-page'
 import { AiInterviewPage } from './components/ai-engineer/ai-interview-page'
+import { SpecialistMilestonePage } from './components/specialist/specialist-milestone-page'
+import { SpecialistInterviewPage } from './components/specialist/specialist-interview-page'
 
 function MilestoneRouter () {
 	const { activeTrack, activeMilestoneId } = useProgressStore()
@@ -23,6 +25,20 @@ function MilestoneRouter () {
 				return <AiInterviewPage />
 			default:
 				return <AiMilestonePage milestoneId="ai-m1" />
+		}
+	}
+
+	if (activeTrack === 'frontend-specialist') {
+		switch (activeMilestoneId) {
+			case 'sp-m1':
+			case 'sp-m2':
+			case 'sp-m3':
+			case 'sp-m4':
+				return <SpecialistMilestonePage milestoneId={activeMilestoneId} />
+			case 'sp-m5':
+				return <SpecialistInterviewPage />
+			default:
+				return <SpecialistMilestonePage milestoneId="sp-m1" />
 		}
 	}
 

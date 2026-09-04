@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
 	base: '/micro1-frontend-prep-bootcamp/',
 	plugins: [react()],
+	build: {
+		outDir: 'docs',
+	},
 })

@@ -1,4 +1,4 @@
-export type TrackType = 'frontend' | 'ai-engineer'
+export type TrackType = 'frontend' | 'ai-engineer' | 'frontend-specialist'
 
 export type CategoryType = 
 	| 'javascript' 
@@ -10,6 +10,10 @@ export type CategoryType =
 	| 'agentic-ai'
 	| 'tools-debugging'
 	| 'rl-benchmarks'
+	| 'specialist-rationale'
+	| 'specialist-critique'
+	| 'specialist-rfcs'
+	| 'specialist-communication'
 	| 'interview'
 
 export interface CodeExample {
